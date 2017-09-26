@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 使用selenium模拟翻页
 使用beautifulsoup解析网页
