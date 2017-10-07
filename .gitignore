@@ -1,2 +1,4 @@
 .idea/
 ghostdriver.log
+__pycache__/
+test.py

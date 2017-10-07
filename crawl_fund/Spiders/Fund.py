@@ -18,6 +18,13 @@ from crawl_fund.mappers.Fund import Myfund
 from crawl_fund.common.function import getText
 engine = create_engine(dburl,echo=True)
 
+##获取基金每一页的数据，并且写入到文件当中
+def getFundhtml():
+    # 初始化selenium
+    driver = webdriver.PhantomJS()
+    driver.get('http://fund.eastmoney.com/fund.html')
+    totalpage = getPageTotal(driver)
+    getData(driver, 1, totalpage)
 ##获取总的页数
 def getPageTotal(driver):
     getTotalPage_text = driver.find_element_by_id("pager").find_element_by_xpath("span[@class='nv']").text
@@ -80,17 +87,9 @@ def SaveDb():
                 ##构造数据库实体化对象列表，方便批量插入
                 dataList.append(myfund)
     #批量插入
-    print(dataList)
-    # mysession.add_all(dataList)  # 批量新增
-    # mysession.commit()
-    # mysession.close()
-##获取基金每一页的数据，并且写入到文件当中
-def getFundhtml():
-    # 初始化selenium
-    driver = webdriver.PhantomJS()
-    driver.get('http://fund.eastmoney.com/fund.html')
-    totalpage = getPageTotal(driver)
-    getData(driver, 1, totalpage)
+    mysession.add_all(dataList)  # 批量新增
+    mysession.commit()
+    mysession.close()
 
 
 
