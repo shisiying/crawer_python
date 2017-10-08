@@ -1,1 +1,0 @@
-<div style="text-align:center; font-size:14px;"><img src="http://j5.dfcfw.com/j1/images/loading2.gif" title="数据加载中" style="margin:50px 10px; vertical-align:middle;">数据加载中...</div>

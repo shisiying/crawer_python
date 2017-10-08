@@ -3,8 +3,6 @@
 使用selenium模拟翻页
 使用beautifulsoup解析网页
 使用sqlacheme存储入库
-多进程调用抓取方法process
-使用manager进行进程数据共享
 '''
 import os
 from datetime import datetime
