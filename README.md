@@ -6,4 +6,4 @@ at this demo you can learn how to use the selenium,beautifulsoup,sqlacheme,proce
 
 ## [豆瓣模拟登陆人工打码自动顶贴](https://github.com/shisiying/crawer_python/blob/master/doubandingtie/login_douban.py)
 
-the robot for the douban comment
+the robot for the douban comment，at this demo,you will will know how to use beautifulsoup and request to login the douban!
