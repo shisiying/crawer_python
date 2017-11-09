@@ -3,8 +3,6 @@
 使用selenium模拟翻页
 使用beautifulsoup解析网页
 使用sqlacheme存储入库
-多进程调用抓取方法process
-使用manager进行进程数据共享
 '''
 import os
 from datetime import datetime
@@ -42,7 +40,7 @@ def getData(driver,start,end):
         WebDriverWait(driver,30).until(lambda driver:driver.find_element_by_id('pager').find_element_by_xpath("span[@value={0} and @class!='end page']".format(x)).get_attribute(
             'class').find("at") != -1)
         #写入文件中
-        with open("./htmls/{0}.txt".format(x),'wb') as f:
+        with open(os.path.abspath('..')+"\htmls\{0}.txt".format(x),'wb') as f:
             ##只抓取表格部分，方便beautifulsoup解析数据
             f.write(driver.find_element_by_id("tableDiv").get_attribute("innerHTML").encode('utf-8'))
             f.close()
@@ -90,6 +88,7 @@ def SaveDb():
     mysession.add_all(dataList)  # 批量新增
     mysession.commit()
     mysession.close()
+
 
 
 
