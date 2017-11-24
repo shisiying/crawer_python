@@ -1,0 +1,16 @@
+      #     'approvalNumber': data_list['process_instance_id'],
+                            #     'headline': data_list['title'],
+                            #     'approvalStatus': 'COMPLETED',
+                            #     'approvalResult': data_list['process_instance_result'],
+                            #     'approvalTime': data_list['create_time'],
+                            #     'approvalFinshTime': data_list['finish_time'],
+                            #     'initiatorsNumber': None,
+                            #     'initiatorsUserID': data_list['originator_userid'],
+                            #     'initiatorsName': getName(data_list['title']),
+                            #     'initiatorsDepartment': data_list['originator_dept_id'],
+                            #     'historicalApproverName': data_list['approver_userid_list']['string'],
+                            #     'approvalHistory' = data_list['approver_userid_list']['string'],
+                            #                         'currentProcessingName' =
+                            # data_list['approver_userid_list']['string'][-1],
+                            # 'reviewTake' = duration(data_list['create_time'], data_list['finish_time']),  ##day
+                            #

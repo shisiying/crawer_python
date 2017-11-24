@@ -163,8 +163,8 @@ def replies(session):
 
 if __name__ == '__main__':
     douban_session = login(
-        username='wzw1**3***33@gmail.com',
-        passwd='wang**2'
+        username='751401459@qq.com',
+        passwd='ssy102009'
     )
     join_the_group(douban_session)
     replies(douban_session)
