@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: 2017-11-17 14:45:26
+-- Generation Time: 2017-11-18 04:46:36
 -- 服务器版本： 10.1.26-MariaDB
 -- PHP Version: 7.0.23
 
@@ -33,7 +33,9 @@ CREATE TABLE `userinfo` (
   `phone` varchar(20) NOT NULL,
   `datetime` varchar(20) NOT NULL,
   `amount` int(11) NOT NULL,
-  `num` varchar(50) NOT NULL
+  `num` varchar(50) NOT NULL,
+  `userid` int(11) NOT NULL,
+  `name` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

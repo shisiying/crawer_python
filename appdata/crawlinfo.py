@@ -2,54 +2,41 @@
 __author__ = 'seven'
 __date__ = '2017/11/17 20:51'
 
-import demjson
+import json
+import time
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from appdata import User
+from appdata.common.User import Userinfo
 
 
 ##target url
-userinfourl = ''
+userinfourl = 'http://api.renrengyw.com/Api/Userv9/recomLog'
 
 ##your head
 heads = {
-    'Content-Type': '',
-    'Content-Length': '',
-    'Connection': '',
-    'Accept-Encoding': '',
-    'User-Agent': '',
-    'UserToken': ''
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36',
 }
 ## database connect
-dburl="mysql+pymysql://root:[密码]@localhost/[数据库]?charset=utf8"
+dburl="mysql+pymysql://root:[密码]@localhost/[数据库名字]?charset=utf8"
 engine = create_engine(dburl,echo=True)
 mysession = sessionmaker(bind=engine)()
 
 ##获取数据
 def getdatafromuser(heads,userid,page):
-    header = {
-        'Content-Type':heads['Content-Type'],
-        'Content-Length':heads['Content-Length'],
-        'Connection':heads['Connection'],
-        'Accept-Encoding':heads['Accept-Encoding'],
-        'User-Agent':heads['User-Agent'],
-        'UserToken': heads['UserToken']
-    }
-    params ={
-       'logintype': 1,
-        'userid': userid,
-        'p' : page
-    }
-    response = requests.post(url=userinfourl,data=params,headers=header)
 
+    taget_url = userinfourl+"?p={}&logintype=1&userid={}".format(page,userid)
+    header = {
+        'User-Agent':heads['User-Agent'],
+    }
+    response = requests.get(url=taget_url,headers=header)
     return response.json()
 
 ##批量插入数据库
-def insertdata(user_data):
+def insertdata(user_data,userid):
     datalist = []
     for user_data in user_data:
-        user = User(user_data['phone'],user_data['datetime'],user_data['amount'],user_data['num'])
+        user = Userinfo(phone=user_data['phone'],datetime=user_data['datetime'],amount=user_data['amount'],num=user_data['num'],userid=userid,name=user_data['name'])
         ##构造数据库实体化对象列表，方便批量插入
         datalist.append(user)
         # 批量插入
@@ -60,22 +47,27 @@ def insertdata(user_data):
 if __name__ == '__main__':
     ##genrate userid
     for userid in range(1,200000):
+        print('userid')
+        print(userid)
         ##set True
         flag = True
         ##set page =1
         page = 1
         ##genrate
         while flag:
-            rturn_data = getdatafromuser(heads=heads,userid=userid,page=page)
-            ##json change to python list
-            return_data =demjson.decode(rturn_data,'utf-8')
+            print('page:')
+            print(page)
+            return_data = getdatafromuser(heads=heads,userid=userid,page=page)
             ##data is empty,set page flag False
-            if len(rturn_data['result']['list'])==0:
+            if len(return_data['result']['list'])==0:
                 flag = False
             else:
                 ##page+1
                 page =page +1
                 ##数据批量入库
-                insertdata(return_data)
+                insertdata(return_data['result']['list'],userid)
+                ##延时3秒
+                time.sleep(3)
+
 
 

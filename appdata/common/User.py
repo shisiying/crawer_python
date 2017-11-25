@@ -15,3 +15,5 @@ class Userinfo(Base):
     datetime = Column(String(20), nullable=False)
     amount = Column(Integer, nullable=False)
     num = Column(String(50), nullable=False)
+    userid = Column(Integer, nullable=False)
+    name = Column(String(10), nullable=False)
