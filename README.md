@@ -12,3 +12,8 @@ the robot for the douban comment
 
 the crawler for the website http://www.jameshardie.co.nz/specifiers/cad-library
 
+## [appapi数据获取批量入库](https://github.com/shisiying/crawer_python/blob/master/appdata/crawlinfo.py)
+the crawler for the app api
+
+## [钉钉数据同步多线程更新入库](https://github.com/shisiying/crawer_python/blob/master/dingding/main.py)
+the auto crawler for dingding data
