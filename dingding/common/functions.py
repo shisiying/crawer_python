@@ -11,6 +11,7 @@ def getName(title):
         name =  re.search('(\w+)的', title).group(1)
     except:
         name =None
+    return name
 
 def getAccsory(data):
     if 'value' in data:
