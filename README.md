@@ -17,3 +17,6 @@ the crawler for the app api
 
 ## [钉钉数据同步多线程更新入库](https://github.com/shisiying/crawer_python/blob/master/dingding/main.py)
 the auto crawler for dingding data
+
+## [使用selnium+chrome+asyncio+aiohttp多进程异步抓取今日头条整站数据](https://github.com/shisiying/crawer_python/blob/master/aiohttptoutiao/toutiao.py)
+今日头条整站数据
