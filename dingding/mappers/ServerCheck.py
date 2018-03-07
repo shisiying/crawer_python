@@ -33,3 +33,7 @@ class Servercheck(Base):
     CPUphoto = Column(Text)
     presentTime = Column(String(255))
     presentSite = Column(String(255))
+    serverBrand = Column(String(255))
+    serverStatus = Column(String(255))
+    statusSign = Column(String(255))
+    hddSign = Column(String(255))

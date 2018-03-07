@@ -41,4 +41,5 @@ class Costapplication(Base):
     useLocation = Column(String(255))
     remark = Column(String(255))
     photo = Column(Text)
-    otherAccessory = Column(String(255))
+    otherAccessory = Column(String(Text))
+    applicaionReason = Column(String(255))

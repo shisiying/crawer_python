@@ -91,13 +91,18 @@ async def parse(response):
         pub_time = re.search('time: \'(.+)\'',response).group(1)
     except:
         pub_time = None
+    try:
+        content = re.search('content:(.+)\,',response).group(1)
+    except:
+        content = None
 
     result = {
         'catch_date':catch_date,
         'title':title,
         'name':name,
         'catogory':catogory,
-        'pub_time':pub_time
+        'pub_time':pub_time,
+        'content':content
     }
     return result
 

@@ -5,7 +5,7 @@ import sys
 import time
 import os
 import requests
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from common.config import dburl, corpsecret, corpid
 from common.functions import duration, getName, getAccsory, getProjectName, getAmount, getLaneNumber, getPhoto, \
     getRemark, getSpecificationModels, getStationName, getTotalPrice, getTradeMark, getUnitPrice, getUnits, \
@@ -67,6 +67,7 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
         'PROC-FF6YQLE1N2-KKBJDCMHQB3NGD5CUASW1-GHLC7J0J-D8': '计重类费用',
         'PROC-LY7L1NOV-IPYPQ63YR8YKK4BYIA6V1-J6G9QU9J-1': '设备维修费用',
         'PROC-FF6YRLE1N2-SOYP3ZCHPFAKXLF9S65T1-8QXEQU9J-3': '设备材料采购费用',
+        'PROC-WIYJNNZV-4EQQ84S6T2CNH0N4JR1L1-01DQMXAJ-3': '日常维护'
     }
     for process_code, costtype in process_codes.items():
         ##初始設置頁數為1
@@ -74,9 +75,9 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
 
         ##当返回结果没有该字段时表示没有更多数据了，没有该字段时设置为-1
         while cursor != -1:
-            # time.sleep(2)
+            time.sleep(0.5)
             response_data = getProcessinstanceList(AccessToken=AccessToken, process_code=process_code,
-                                                  start_time=start_time, end_time=end_time, cursor=cursor)
+                                                   start_time=start_time, end_time=end_time, cursor=cursor)
             if 'error_response' in response_data.keys():
                 logging.info(response_data['error_response']['sub_msg'].encode('utf-8'))
 
@@ -100,16 +101,32 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
                 if result_flag['result']['list']:
                     ###獲取詳情數據
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
-
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
                             print(data_list)
+                            ###判断主键是否存在
+                            res = mysession.query(Costapplication).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             project_data = json.loads(
                                 data_list['form_component_values']['form_component_value_vo'][-2]['value'])
 
+                            companyName = '其他'
+                            highwaySection = '其他'
+                            type = '其他'
+                            ##处理其他字段
+                            for label_name in data_list['form_component_values']['form_component_value_vo']:
+                                print(label_name)
+                                if 'value' in label_name.keys() and label_name['name'] == '维护单位':
+                                    companyName = label_name['value']
+                                if 'value' in label_name.keys() and label_name['name'] == '所属路段':
+                                    highwaySection = label_name['value']
+                                if 'value' in label_name.keys() and label_name['name'] == '分类':
+                                    type = label_name['value']
+
                             ##循環費用明細
                             for project in enumerate(project_data):
-
                                 # ##定義字段
                                 projectName = '其他'
                                 tradeMark = '其他'
@@ -123,12 +140,13 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
                                 useLocation = '其他'
                                 remark = '其他'
                                 photo = '其他'
+                                reason = '其他'
 
                                 ##處理字符串
-                                for pr in project[1]:
+                                for pr in project[1]['rowValue']:
                                     if pr['label'] == '项目名称' and 'value' in pr.keys():
                                         projectName = pr['value']
-                                    if  pr['label'] == '设备名称' and 'value' in pr.keys():
+                                    if pr['label'] == '设备名称' and 'value' in pr.keys():
                                         projectName = pr['value']
                                     if pr['label'] == '品牌' and 'value' in pr.keys():
                                         tradeMark = pr['value']
@@ -142,7 +160,7 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
                                         unitPrice = pr['value']
                                     if pr['label'] == '合计金额' and 'value' in pr.keys():
                                         totalPrice = pr['value']
-                                    if  pr['label'] == '本项预算总金额' and 'value' in pr.keys():
+                                    if pr['label'] == '本项预算总金额' and 'value' in pr.keys():
                                         totalPrice = pr['value']
                                     if pr['label'] == '站名' and 'value' in pr.keys():
                                         stationName = pr['value']
@@ -154,26 +172,12 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
                                         remark = pr['value']
                                     if pr['label'] == '报送照片' and 'value' in pr.keys():
                                         photo = eval(pr['value'])[0]
-                                    if  pr['label'] == '照片'  and 'value' in pr.keys():
+                                    if pr['label'] == '照片' and 'value' in pr.keys():
                                         photo = eval(pr['value'])[0]
-                                    if  pr[ 'label'] == '远景照片' and 'value' in pr.keys():
-                                        photo =eval(pr['value'])[0]
-
-                                try:
-                                    companyName = data_list['form_component_values']['form_component_value_vo'][0]['value']
-                                except:
-                                    companyName = '其他'
-
-
-                                try:
-                                    highwaySection = data_list['form_component_values']['form_component_value_vo'][1]['value']
-                                except:
-                                    highwaySection = '其他'
-
-                                try:
-                                    type = data_list['form_component_values']['form_component_value_vo'][2]['value']
-                                except:
-                                    type = '其他'
+                                    if pr['label'] == '远景照片' and 'value' in pr.keys():
+                                        photo = eval(pr['value'])[0]
+                                    if pr['label'] == '申请理由' and 'value' in pr.keys():
+                                        reason = pr['value']
 
 
                                 fileds = {
@@ -193,9 +197,9 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
                                     'approvalHistory': str(data_list['approver_userid_list']['string']),
                                     'currentProcessingName': data_list['approver_userid_list']['string'][-1],
                                     'reviewsTake': duration(data_list['create_time'], data_list['finish_time']),  ##day
-                                    'companyName':companyName ,
+                                    'companyName': companyName,
                                     'highwaySection': highwaySection,
-                                    'type':type ,
+                                    'type': type,
                                     'projectName': projectName,
                                     'tradeMark': tradeMark,
                                     'specificationModels': specificationModels,
@@ -209,10 +213,11 @@ def insertIntoCostapplication(start_time, end_time, AccessToken):
                                     'remark': remark,
                                     'photo': photo,
                                     'otherAccessory': getAccsory(
-                                        data_list['form_component_values']['form_component_value_vo'][-1])
+                                        data_list['form_component_values']['form_component_value_vo'][-1]),
+                                    'applicaionReason': reason
                                 }
                                 costapplication = Costapplication(**fileds)
-                                mysession.merge(costapplication)  # 主鍵有存在也新增
+                                mysession.add(costapplication)
                                 mysession.commit()
                                 mysession.close()
             else:
@@ -262,7 +267,11 @@ def insertFaultHistory(start_time, end_time, AccessToken):
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
                         # 判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
-
+                            ###判断主键是否存在
+                            res = mysession.query(Faulthistory).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##定義動態的字段
                             highwaySection = '其他'
                             controalStation = '其他'
@@ -345,15 +354,10 @@ def insertFaultHistory(start_time, end_time, AccessToken):
                                 'photo4': photo4
                             }
                             faulthistory = Faulthistory(**fileds)
-                            mysession.merge(faulthistory)
+                            mysession.add(faulthistory)
                             mysession.commit()
                             mysession.close()
-                            # try:
-                            #      mysession.commit()
-                            # except:
-                            #      pass
-                            # finally:
-                            #      mysession.close()
+
             else:
                 logging.info('{} the request of {} has error.the process code is {} '.format(
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), sys._getframe().f_code.co_name, process_code))
@@ -418,7 +422,10 @@ def inspectionRecord(start_time, end_time, AccessToken):
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
-
+                            res = mysession.query(Inspectionrecord).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##定義字段
                             highwaySection = '其他'
                             site = '其他'
@@ -433,6 +440,7 @@ def inspectionRecord(start_time, end_time, AccessToken):
                             photo2 = '其他'
                             photo3 = '其他'
                             photo4 = '其他'
+                            recordType = '设备巡检'
 
                             for data_form_component in data_list['form_component_values']['form_component_value_vo']:
 
@@ -446,6 +454,8 @@ def inspectionRecord(start_time, end_time, AccessToken):
                                     site = data_form_component['value']
                                 if data_form_component['name'] == '服务器名称' and 'value' in data_form_component.keys():
                                     site = data_form_component['value']
+                                if data_form_component['name'] == '记录类型' and 'value' in data_form_component.keys():
+                                    recordType = data_form_component['value']
                                 if data_form_component['name'] == '地点补充' and 'value' in data_form_component.keys():
                                     otherSite = data_form_component['value']
                                 if data_form_component['name'] == '机房温度' and 'value' in data_form_component.keys():
@@ -466,9 +476,15 @@ def inspectionRecord(start_time, end_time, AccessToken):
                                     photo = eval(data_form_component['value'])[0]
                                 if data_form_component['name'] == '病毒库特征码照片' and 'value' in data_form_component.keys():
                                     photo = eval(data_form_component['value'])[0]
+                                if data_form_component['name'] == '病毒库特征码版本号' and 'value' in data_form_component.keys():
+                                    photo = data_form_component['value']
                                 if data_form_component['name'] == '图片(2)' and 'value' in data_form_component.keys():
                                     photo2 = eval(data_form_component['value'])[0]
-                                if data_form_component['name'] == 'CPU内存使用率照片图片(2)' and 'value' in data_form_component.keys():
+                                if data_form_component[
+                                    'name'] == 'CPU内存使用率照片图片(2)' and 'value' in data_form_component.keys():
+                                    photo2 = eval(data_form_component['value'])[0]
+                                if data_form_component[
+                                    'name'] == 'CPU内存使用率照片' and 'value' in data_form_component.keys():
                                     photo2 = eval(data_form_component['value'])[0]
                                 if data_form_component['name'] == '图片(3)' and 'value' in data_form_component.keys():
                                     photo3 = eval(data_form_component['value'])[0]
@@ -492,7 +508,7 @@ def inspectionRecord(start_time, end_time, AccessToken):
                                 'currentProcessingName': data_list['approver_userid_list']['string'][-1],
                                 'reviewTake': duration(data_list['create_time'], data_list['finish_time']),  ##day
                                 'highwaySection': highwaySection,
-                                'recordType': '设备巡检',
+                                'recordType': recordType,
                                 'site': site,
                                 'otherSite': otherSite,
                                 'temperature': temperature,
@@ -507,7 +523,7 @@ def inspectionRecord(start_time, end_time, AccessToken):
                                 'photo4': photo4
                             }
                             inspectionrecord = Inspectionrecord(**fileds)
-                            mysession.merge(inspectionrecord)  # 主鍵有存在也新增
+                            mysession.add(inspectionrecord)  #
                             mysession.commit()
                             mysession.close()
 
@@ -552,6 +568,11 @@ def insertCarCostHistory(start_time, end_time, AccessToken):
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
+                            print(data_list)
+                            res = mysession.query(Carcosthistory).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             carNumber = '其他'
                             highwaySection = '其他'
                             mileage = '其他'
@@ -601,7 +622,7 @@ def insertCarCostHistory(start_time, end_time, AccessToken):
                                 'receiptPhoto': str(receiptPhoto)
                             }
                             carcosthistory = Carcosthistory(**fileds)
-                            mysession.merge(carcosthistory)  # 主鍵有存在也新增
+                            mysession.add(carcosthistory)  #
                             mysession.commit()
                             mysession.close()
 
@@ -646,14 +667,19 @@ def insertComplainRocord(start_time, end_time, AccessToken):
 
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
+                            res = mysession.query(Complainrecord).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##循环问题清单
-                            for list_value in enumerate(eval(data_list['form_component_values']['form_component_value_vo'][-3]['value'])):
+                            for list_value in enumerate(
+                                    eval(data_list['form_component_values']['form_component_value_vo'][-3]['value'])):
 
                                 ##定義字段
                                 customerName = '其他'
                                 highwaySection = '其他'
                                 list = list_value[0]
-                                complain =list_value[1][0]['value']
+                                complain = list_value[1][0]['value']
                                 photo = '其他'
                                 accessory = '其他'
 
@@ -690,7 +716,7 @@ def insertComplainRocord(start_time, end_time, AccessToken):
                                     'accessory': accessory
                                 }
                                 complain = Complainrecord(**fileds)
-                                mysession.merge(complain)  # 主鍵有存在也新增
+                                mysession.add(complain)  #
                                 mysession.commit()
                                 mysession.close()
 
@@ -733,7 +759,10 @@ def insertImportantEvent(start_time, end_time, AccessToken):
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
-
+                            res = mysession.query(Importantevent).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##定義字段
                             department = '其他'
                             highwaySection = '其他'
@@ -811,7 +840,7 @@ def insertImportantEvent(start_time, end_time, AccessToken):
                                 'accessory': accessory,
                             }
                             importantevent = Importantevent(**fileds)
-                            mysession.merge(importantevent)  # 主鍵有存在也新增
+                            mysession.add(importantevent)  #
                             mysession.commit()
                             mysession.close()
 
@@ -860,7 +889,10 @@ def insertServerCheck(start_time, end_time, AccessToken):
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
-
+                            res = mysession.query(Servercheck).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##定義字段
                             highwaySection = '其他'
                             serverName = '其他'
@@ -871,6 +903,11 @@ def insertServerCheck(start_time, end_time, AccessToken):
                             CPUphoto = '其他'
                             presentTime = '其他'
                             presentSite = '其他'
+                            serverBrand = '其他'
+                            serverStatus = '其他'
+                            statusSign = '其他'
+                            hddSign = '其他'
+
                             for form_component in data_list['form_component_values']['form_component_value_vo']:
                                 if form_component['name'] == '路段' and 'value' in form_component.keys():
                                     highwaySection = form_component['value']
@@ -888,6 +925,14 @@ def insertServerCheck(start_time, end_time, AccessToken):
                                     virusDBphoto = eval(form_component['value'])[0]
                                 if form_component['name'] == 'CPU内存使用率照片' and 'value' in form_component.keys():
                                     CPUphoto = eval(form_component['value'])[0]
+                                if form_component['name'] == '服务器品牌' and 'value' in form_component.keys():
+                                    serverBrand = form_component['value']
+                                if form_component['name'] == '运行状态研判' and 'value' in form_component.keys():
+                                    serverStatus = form_component['value']
+                                if form_component['name'] == '运行状态告警灯图片' and 'value' in form_component.keys():
+                                    statusSign = eval(form_component['value'])[0]
+                                if form_component['name'] == '硬盘告警灯图片' and 'value' in form_component.keys():
+                                    hddSign = eval(form_component['value'])[0]
                                 if form_component['name'] == '["当前时间","当前地点"]' and 'value' in form_component.keys():
                                     presentTime = eval(form_component['value'])[0]
                                     presentSite = str(eval(form_component['value'])[1]) + ',' + str(
@@ -916,11 +961,14 @@ def insertServerCheck(start_time, end_time, AccessToken):
                                 'virusDBphoto': virusDBphoto,
                                 'CPUphoto': CPUphoto,
                                 'presentTime': presentTime,
-                                'presentSite': presentSite
+                                'presentSite': presentSite,
+                                'serverBrand': serverBrand,
+                                'serverStatus': serverStatus,
+                                'statusSign': statusSign,
+                                'hddSign': hddSign
                             }
-
                             servercheck = Servercheck(**fileds)
-                            mysession.merge(servercheck)  # 主鍵有存在也新增
+                            mysession.add(servercheck)  #
                             mysession.commit()
                             mysession.close()
             else:
@@ -964,9 +1012,11 @@ def insertDailyWorkReport(start_time, end_time, AccessToken):
 
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
-
+                            res = mysession.query(Dailyworkreport).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##定義字段
-
                             highwaySection = '其他'
                             date = None
                             weather = '其他'
@@ -991,6 +1041,8 @@ def insertDailyWorkReport(start_time, end_time, AccessToken):
                                     if form_component['name'] == '气温' and 'value' in form_component.keys():
                                         temperature = form_component['value']
                                     if form_component['name'] == '监控完好率' and 'value' in form_component.keys():
+                                        rate = form_component['value']
+                                    if form_component['name'] == '外场设备完好率' and 'value' in form_component.keys():
                                         rate = form_component['value']
                                     if form_component['name'] == '外场完好率图片' and 'value' in form_component.keys():
                                         ratePhoto = eval(form_component['value'])[0]
@@ -1034,11 +1086,11 @@ def insertDailyWorkReport(start_time, end_time, AccessToken):
                                 }
 
                                 dailyworkreport = Dailyworkreport(**fileds)
-                                mysession.merge(dailyworkreport)  # 主鍵有存在也新增
+                                mysession.add(dailyworkreport)
                                 mysession.commit()
                                 mysession.close()
 
-                                ##批量插入
+
             else:
                 logging.info('{} the request of {} has error.the process code is {} '.format(
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), sys._getframe().f_code.co_name, process_code))
@@ -1079,20 +1131,24 @@ def insertReturnvisit(start_time, end_time, AccessToken):
                     for data_list in result_flag['result']['list']['process_instance_top_vo']:
                         ##判断审批状态是否为成功
                         if data_list['status'] == 'COMPLETED':
+                            res = mysession.query(Returnvisit).filter_by(
+                                approvalNumber=data_list['process_instance_id']).all()
+                            if len(res) != 0:
+                                continue
                             ##定義字段
                             highwaySection = '其他'
-                            teamName ='其他'
-                            chargePersonName ='其他'
-                            customerName ='其他'
-                            complain ='其他'
-                            feedBack ='其他'
-                            faultComplain ='其他'
-                            dress ='其他'
-                            speed ='其他'
-                            ability ='其他'
-                            attitude ='其他'
-                            communication ='其他'
-                            accessory ='其他'
+                            teamName = '其他'
+                            chargePersonName = '其他'
+                            customerName = '其他'
+                            complain = '其他'
+                            feedBack = '其他'
+                            faultComplain = '其他'
+                            dress = '其他'
+                            speed = '其他'
+                            ability = '其他'
+                            attitude = '其他'
+                            communication = '其他'
+                            accessory = '其他'
 
                             for form_component in data_list['form_component_values']['form_component_value_vo']:
 
@@ -1140,35 +1196,35 @@ def insertReturnvisit(start_time, end_time, AccessToken):
                                     'currentProcessingName': data_list['approver_userid_list']['string'][-1],
                                     'reviewTake': duration(data_list['create_time'], data_list['finish_time']),  ##day
                                     'highwaySection': highwaySection,
-                                    'teamName' :teamName,
-                                    'chargePersonName' :chargePersonName,
-                                    'customerName' : customerName,
-                                    'complain' :complain,
-                                    'feedBack' : feedBack,
-                                    'faultComplain' :faultComplain,
-                                    'dress' : dress,
-                                    'speed' :speed,
-                                    'ability' :ability,
-                                    'attitude' : attitude,
-                                    'communication' : communication,
+                                    'teamName': teamName,
+                                    'chargePersonName': chargePersonName,
+                                    'customerName': customerName,
+                                    'complain': complain,
+                                    'feedBack': feedBack,
+                                    'faultComplain': faultComplain,
+                                    'dress': dress,
+                                    'speed': speed,
+                                    'ability': ability,
+                                    'attitude': attitude,
+                                    'communication': communication,
                                     'accessory': accessory
                                 }
 
                                 returnvisit = Returnvisit(**fileds)
-                                mysession.merge(returnvisit)  # 主鍵有存在也新增
+                                mysession.add(returnvisit)  #
                                 mysession.commit()
                                 mysession.close()
 
-                                ##批量插入
+
             else:
                 logging.info('{} the request of {} has error.the process code is {} '.format(
                     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), sys._getframe().f_code.co_name, process_code))
 
-def sendMessage(title,body):
-    # post_url = 'https://sc.ftqq.com/SCU17044Tcf954a855046985141b8f52c33008dc75a1fa4242abb6.send'
+
+def sendMessage(title, body):
     post_url = 'https://sc.ftqq.com/SCU17044Tcf954a855046985141b8f52c33008dc75a1fa4242abb6.send'
     datas = {
-        'text':title,
-        'desp':body
+        'text': title,
+        'desp': body
     }
-    requests.post(post_url,data=datas)
+    requests.post(post_url, data=datas)

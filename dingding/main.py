@@ -23,8 +23,8 @@ if __name__ == '__main__':
 
     #多綫程執行不同的入庫
     threads = []
-    # t1 = threading.Thread(target=insertIntoCostapplication, args=(start_time, end_time, AccessToken))
-    # threads.append(t1)
+    t1 = threading.Thread(target=insertIntoCostapplication, args=(start_time, end_time, AccessToken))
+    threads.append(t1)
     # t2 = threading.Thread(target=insertCarCostHistory, args=(start_time, end_time, AccessToken))
     # threads.append(t2)
     # t3 = threading.Thread(target=insertComplainRocord, args=(start_time, end_time, AccessToken))
@@ -35,8 +35,8 @@ if __name__ == '__main__':
     # threads.append(t5)
     # t6 = threading.Thread(target=insertImportantEvent, args=(start_time, end_time, AccessToken))
     # threads.append(t6)
-    t7 = threading.Thread(target=insertServerCheck, args=(start_time, end_time, AccessToken))
-    threads.append(t7)
+    # t7 = threading.Thread(target=insertServerCheck, args=(start_time, end_time, AccessToken))
+    # threads.append(t7)
     # t8 = threading.Thread(target=inspectionRecord, args=(start_time, end_time, AccessToken))
     # threads.append(t8)
     # t9 = threading.Thread(target=insertReturnvisit, args=(start_time, end_time, AccessToken))
