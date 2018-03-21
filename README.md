@@ -1,4 +1,8 @@
 
+## [简单分布式多进程爬虫](https://github.com/shisiying/crawer_python/tree/master/easy_distributed_crawler)
+
+简单分布式爬虫项目，该项目，分布式采用简单的主从模式，采用分布式进程和进程间的通信，同时，涵盖了普通爬虫应有的几个模块，URL管理模块，Html解析模块，Html下载模块，数据存储模块，爬虫调度模块
+
 ## [基金爬虫](https://github.com/shisiying/crawer_python/blob/master/crawl_fund/Spiders/FundDetail.py)
 
 This is a demo for crawling the website 'http://fund.eastmoney.com/fund.html'
