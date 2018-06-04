@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import logging
+import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -56,7 +57,7 @@ def parseHtml(htmlData):
                 continue
 
             tradeRow['txHash'] = tdRow[0].get_text().strip()
-            tradeRow['age'] = tdRow[1].span['title'].strip()
+            tradeRow['age'] = datetime.datetime.strptime(tdRow[1].span['title'].strip(),'%b-%d-%Y %I:%M:%S %p')
             tradeRow['fromadress'] = tdRow[2].get_text().strip()
             tradeRow['to'] = tdRow[4].get_text().strip()
             tradeRow['value'] = tdRow[5].get_text().replace(',','').strip()
